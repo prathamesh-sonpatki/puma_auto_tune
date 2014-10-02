@@ -15,12 +15,26 @@ module PumaAutoTune
   extend self
 
   def self.default_ram
-    result = `bin/heroku_ulimit_to_ram`
-    default = if $?.success?
-      Integer(result)
-    else
-      512
-    end
+    ulimit = `ulimit -u`
+    ulimit = if $?.success?
+               ulimit.chomp.to_i
+             else
+               nil
+             end
+
+    result = case ulimit
+             when 256
+               512
+             when 512
+               1024
+             when 32768
+               8192
+             else
+               nil
+             end
+
+    default = result || 512
+
     puts "Default RAM set to #{default}"
     default
   end
